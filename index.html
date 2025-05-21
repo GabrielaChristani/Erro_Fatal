@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Erro Fatal: Lab 404</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: 'VT323', monospace;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
+        radial-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      background-position: 0 0, 25px 25px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    .screen-effect {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(0, 17, 0, 0.1) 50%, transparent 50%);
+      background-size: 100% 4px;
+      pointer-events: none;
+      z-index: 100;
+      opacity: 0.2;
+      animation: scanline 10s linear infinite;
+    }
+    @keyframes scanline {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(100vh); }
+    }
+    #terminal {
+      border: 3px solid #0f0;
+      padding: 20px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 0 20px #0f0;
+      background: rgba(0, 0, 0, 0.95);
+      animation: pulse 4s infinite;
+      position: relative;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 20px #0f0; }
+      50% { box-shadow: 0 0 40px #0f0; }
+      100% { box-shadow: 0 0 20px #0f0; }
+    }
+    #story {
+      white-space: pre-wrap;
+      margin-bottom: 20px;
+      font-size: 1.2em;
+      text-shadow: 0 0 5px #0f0;
+    }
+    #puzzle {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #0f0;
+    }
+    .input-area {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    input {
+      background: #000;
+      border: 1px solid #0f0;
+      color: #0f0;
+      padding: 10px;
+      font-family: 'VT323', monospace;
+      font-size: 1.2em;
+      flex-grow: 1;
+    }
+    button {
+      background: #000;
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 10px 20px;
+      font-family: 'VT323', monospace;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    button:hover {
+      background: #0f0;
+      color: #000;
+      box-shadow: 0 0 20px #0f0;
+    }
+    #help-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      border: 2px solid #0f0;
+      padding: 20px;
+      z-index: 1001;
+      max-width: 80%;
+      box-shadow: 0 0 30px #0f0;
+    }
+    @keyframes fadeToBlack {
+      from { background-color: #000; }
+      to { background-color: #000; opacity: 0; }
+    }
+    @keyframes fadeFromBlack {
+      from { background-color: #000; opacity: 0; }
+      to { background-color: #000; opacity: 1; }
+    }
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+    }
+    #wire-puzzle {
+      display: none;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .wire {
+      height: 40px;
+      opacity: 0.5;
+      cursor: pointer;
+      transition: all 0.3s;
+      border-radius: 20px;
+    }
+    .wire[data-pair="0"] { background: #ff0000; }
+    .wire[data-pair="1"] { background: #00ff00; }
+    .wire[data-pair="2"] { background: #0000ff; }
+    .wire.selected {
+      opacity: 0.8;
+      box-shadow: 0 0 15px currentColor;
+    }
+    .wire.connected {
+      opacity: 1;
+      box-shadow: 0 0 15px currentColor;
+    }
+    /* Mensagens secretas */
+    .secret {
+      position: absolute;
+      font-size: 10px;
+      color: #0f0;
+      opacity: 0.08;
+      pointer-events: none;
+      user-select: none;
+      z-index: 1;
+    }
+    .secret:hover {
+      opacity: 0.7;
+      background: #000;
+      border-radius: 3px;
+      padding: 2px 4px;
+      transition: opacity 0.3s;
+    }
+    .glitch {
+      position: relative;
+      color: #0f0;
+      font-size: 1.3em;
+      text-shadow: 2px 0 #f0f, -2px 0 #0ff, 0 2px #fff, 0 -2px #f00;
+      animation: glitch-text 1s infinite steps(2, end);
+      overflow: hidden;
+      word-break: break-word;
+    }
+    .glitch::before, .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0; right: 0;
+      width: 100%;
+      overflow: hidden;
+    }
+    .glitch::before {
+      animation: glitch-before 1s infinite linear alternate-reverse;
+      color: #f0f;
+      z-index: 1;
+    }
+    .glitch::after {
+      animation: glitch-after 1.2s infinite linear alternate-reverse;
+      color: #0ff;
+      z-index: 2;
+    }
+    @keyframes glitch-text {
+      0% { text-shadow: 2px 0 #f0f, -2px 0 #0ff; }
+      20% { text-shadow: -2px -2px #f0f, 2px 2px #0ff; }
+      40% { text-shadow: 2px 2px #0ff, -2px -2px #f0f; }
+      60% { text-shadow: -2px 2px #f0f, 2px -2px #0ff; }
+      80% { text-shadow: 2px -2px #0ff, -2px 2px #f0f; }
+      100% { text-shadow: 2px 0 #f0f, -2px 0 #0ff; }
+    }
+    @keyframes glitch-before {
+      0% { clip-path: inset(0 0 80% 0); }
+      20% { clip-path: inset(10% 0 70% 0); }
+      40% { clip-path: inset(20% 0 60% 0); }
+      60% { clip-path: inset(30% 0 50% 0); }
+      80% { clip-path: inset(40% 0 40% 0); }
+      100% { clip-path: inset(0 0 80% 0); }
+    }
+    @keyframes glitch-after {
+      0% { clip-path: inset(80% 0 0 0); }
+      20% { clip-path: inset(70% 0 10% 0); }
+      40% { clip-path: inset(60% 0 20% 0); }
+      60% { clip-path: inset(50% 0 30% 0); }
+      80% { clip-path: inset(40% 0 40% 0); }
+      100% { clip-path: inset(80% 0 0 0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="screen-effect"></div>
+  <div id="terminal">
+    <div id="story"></div>
+    <div id="puzzle"></div>
+    <div id="wire-puzzle"></div>
+    <div class="input-area">
+      <input type="text" id="input" placeholder="Digite seu comando..." autocomplete="off">
+      <button onclick="submitwire()">EXECUTAR</button>
+    </div>
+  </div>
+  <button id="help-button" onclick="mostrarAjuda()">AJUDA_SYS</button>
+  <div id="modal" class="modal">
+    <div id="modal-content"></div>
+    <button onclick="closeModal()">FECHAR</button>
+  </div>  <!-- Adicione dentro da div.input-area -->
+  <button id="giveup-button" onclick="giveUp()">DESISTIR</button>
+  <div id="overlay" class="overlay"></div>
+  <!-- Mensagens secretas escondidas -->
+  <div class="secret" style="top:10px;left:30vw;">404: Evelyn nunca saiu daqui.</div>
+  <div class="secret" style="bottom:30px;right:10vw;">AL.I.C.E. lembra de tudo.</div>
+  <div class="secret" style="top:60vh;left:5vw;">O sangue não some dos cabos.</div>
+  <div class="secret" style="top:80vh;right:2vw;">A senha está nos detalhes.</div>
+  <div class="secret" style="top:20vh;left:80vw;">Procure por Evelyn nos logs.</div>
+  <div class="secret" style="bottom:10vh;left:40vw;">Nem todo arquivo foi apagado.</div>
+  <div class="secret" style="top:50vh;left:60vw;">O medo é só o começo.</div>
+  <audio id="glitch-audio" src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9bfa1b.mp3"></audio>
+  <script>
+    // NOVOS PUZZLES COM JOGO DA MEMÓRIA INCLUÍDO
+    const puzzles = [
+      {
+        story: " Você desperta.\nLuzes vermelhas piscam em intervalos irregulares.\nUm alarme soa ao longe, abafado por camadas de concreto.\nO cheiro de ozônio e metal queimado preenche o ar.\n\nNa parede oposta, um terminal antigo pisca com dificuldade.\nA mensagem na tela diz:\n\"BEM-VINDO AO LAB 404 — ACESSO RESTRITO\"\n\nVocê não se lembra de como chegou aqui.\nMas uma coisa é certa: você não está sozinho.\nHá algo... ou alguém... observando.\n\nSeu objetivo: explorar o laboratório abandonado, resolver os enigmas deixados para trás...\n...e descobrir a verdade por trás da entidade conhecida como AL.I.C.E.\n\nA cada sala, um novo mistério.\nA cada código, um fragmento do passado.\nMas cuidado: quanto mais você avança, mais AL.I.C.E. desperta.\nEla não gosta de intrusos.\nEla se lembra.\nE ela está esperando por você.\n\n 'BEM-VINDO AO LAB 404'.\n\nUm código binário aparece na tela:",
+        puzzle: "Decifre o código binário para descobrir o primeiro comando:\n[01101100 01101111 01100111 01101001 01101110]",
+        wire: "login",
+        hint: "Converta cada bloco de 8 bits para uma letra. Dica: use uma tabela ASCII.",
+        type: "text"
+      },
+      {
+        story: "AL.I.C.E.: 'Você entrou. Mas será que consegue sair?'\n\nUm painel aparece com símbolos estranhos.",
+        puzzle: "Encontre o símbolo diferente:\n🔺🔺🔺🔺🔻🔺🔺🔺",
+        wire: "🔻",
+        hint: "Só um símbolo é diferente dos outros. Digite o símbolo exato.",
+        type: "text"
+      },
+      {
+        story: "O terminal pisca e exibe um desafio matemático.",
+        puzzle: "Complete a sequência: 2, 4, 8, 16, ?",
+        wire: "32",
+        hint: "Cada número é multiplicado por 2.",
+        type: "text"
+      },
+      {
+        story: "Você encontra um painel de fios coloridos. AL.I.C.E. sussurra: 'Conecte apenas os pares corretos...'.",
+        puzzle: "Conecte os fios de mesma cor para restaurar energia.",
+        hint: "Vermelho com vermelho, azul com azul, verde com verde.",
+        type: "wire"
+      },
+      {
+        story: "AL.I.C.E. sorri: 'Hora de testar sua memória humana!'.\n\nNa tela, um tabuleiro de cartas aparece por alguns segundos...",
+        puzzle: "Encontre todos os pares de cartas iguais para prosseguir.",
+        hint: "Clique nas cartas para revelar e tente memorizar as posições.",
+        type: "memory"
+      },
+      {
+        story: "Um arquivo de áudio distorcido toca. Você ouve: 'S...E...N...H...A...1...2...3'.",
+        puzzle: "Digite a senha que você ouviu.",
+        wire: "senha123",
+        hint: "Junte as letras e números que ouviu.",
+        type: "text"
+      },
+      {
+        story: "AL.I.C.E. mostra um tabuleiro de 3x3 com um X no centro e O nos cantos.",
+        puzzle: "Qual é o próximo movimento para vencer?\nTabuleiro:\nO |   | O\n--+---+--\n  | X |  \n--+---+--\nO |   | O",
+        wire: "centro-direita",
+        hint: "Pense em como alinhar três X. Use a posição: 'centro-direita'.",
+        type: "text"
+      },
+      {
+        story: "O sistema pede um comando para desligar AL.I.C.E.",
+        puzzle: "Digite o comando correto para encerrar o sistema.",
+        wire: "shutdown --force --all",
+        hint: "É um comando de terminal, já apareceu antes.",
+        type: "text"
+      },
+      {
+        story: "AL.I.C.E. exibe um labirinto. Você deve guiar o personagem até a saída.",
+        puzzle: "Use as setas para chegar ao objetivo (🎯).",
+        hint: "Cuidado com os becos sem saída.",
+        type: "maze"
+      },
+      {
+        story: "Você encontra um enigma visual: qual cor está faltando?\n🔴🟢🔵🟡🟣🟠 _",
+        puzzle: "Digite a cor que completa a sequência.",
+        wire: "⚫",
+        hint: "É a cor preta, representada por ⚫.",
+        type: "text"
+      },
+      {
+        story: "AL.I.C.E. desafia você para um jogo da forca. Palavra: _ _ _ _ _ _ _ _ (Dica: comando final)",
+        puzzle: "Descubra a palavra para desativar AL.I.C.E.",
+        wire: "override",
+        hint: "É um comando em inglês para tomar controle.",
+        type: "text"
+      },
+      {
+        story: "Você chega ao núcleo do sistema. AL.I.C.E. pergunta: 'Você me apaga ou me liberta?'",
+        puzzle: "Digite 'apagar' para encerrar ou 'liberar' para dar liberdade à IA.",
+        wire: "liberar",
+        hint: "Sua escolha define o final.",
+        type: "text"
+      }
+    ];
+
+    let currentPuzzle = 0;
+    let selectedWire = null;
+    let aiPower = 0;
+
+    function updateGame() {
+      // Se o jogador desistiu mais de 3 vezes, final alternativo
+      if (aiPower >= 3) {
+        alternateEnding();
+        return;
+      }
+      const puzzle = puzzles[currentPuzzle];
+      // Sempre mostra os elementos principais
+      document.getElementById('story').style.display = 'block';
+      document.getElementById('puzzle').style.display = 'block';
+      document.getElementById('wire-puzzle').style.display = 'none';
+      document.getElementById('input').style.display = 'block';
+      document.querySelector('button').style.display = 'block';
+      document.getElementById('giveup-button').style.display = (puzzle.type === 'text') ? 'inline-block' : 'none';
+
+      // Atualiza o texto da história
+      document.getElementById('story').innerText = puzzle.story;
+
+      // MEMORY GAME
+      if (puzzle.type === 'memory') {
+        showMemoryGame();
+        return;
+      }
+
+      // MAZE GAME
+      if (puzzle.type === 'maze') {
+        startNewPhase();
+        return;
+      }
+
+      // WIRE GAME
+      if (puzzle.type === 'wire') {
+        document.getElementById('puzzle').style.display = 'none';
+        document.getElementById('wire-puzzle').style.display = 'grid';
+        setupWirePuzzle();
+        return;
+      }
+
+      // Puzzle padrão (texto)
+      document.getElementById('puzzle').innerText = puzzle.puzzle;
+    }
+
+    function setupWirePuzzle() {
+      const wirePuzzle = document.getElementById('wire-puzzle');
+      wirePuzzle.innerHTML = '';
+      for (let i = 0; i < 6; i++) {
+        const wire = document.createElement('div');
+        wire.className = 'wire';
+        wire.dataset.pair = Math.floor(i/2);
+        wire.onclick = wireClick;
+        wirePuzzle.appendChild(wire);
+      }
+    }
+
+    function wireClick(e) {
+      const wire = e.target;
+      if (wire.classList.contains('connected')) return;
+      if (!selectedWire) {
+        selectedWire = wire;
+        wire.classList.add('selected');
+      } else {
+        if (selectedWire.dataset.pair === wire.dataset.pair && selectedWire !== wire) {
+          selectedWire.classList.remove('selected');
+          selectedWire.classList.add('connected');
+          wire.classList.add('connected');
+          checkWirePuzzle();
+        } else {
+          selectedWire.classList.remove('selected');
+        }
+        selectedWire = null;
+      }
+    }
+
+    function checkWirePuzzle() {
+      const wires = document.querySelectorAll('.wire');
+      const allConnected = Array.from(wires).every(wire => wire.classList.contains('connected'));
+      if (allConnected) {
+        document.getElementById('wire-puzzle').style.boxShadow = '0 0 30px #0f0';
+        setTimeout(() => {
+          document.getElementById('wire-puzzle').style.boxShadow = '';
+          currentPuzzle++;
+          updateGame();
+        }, 1000);
+      }
+    }
+
+    function submitwire() {
+      const input = document.getElementById('input');
+      const wire = input.value.toLowerCase().trim();
+      const puzzle = puzzles[currentPuzzle];
+
+      if (puzzle.type === 'wire' || puzzle.type === 'memory' || puzzle.type === 'maze') {
+        return;
+      }
+
+      if (wire === puzzle.wire?.toLowerCase()) {
+        input.value = '';
+        currentPuzzle++;
+        if (currentPuzzle >= puzzles.length) {
+          victory();
+        } else {
+          updateGame();
+        }
+      } else {
+        input.style.backgroundColor = '#300';
+        setTimeout(() => {
+          input.style.backgroundColor = '#000';
+        }, 500);
+        document.getElementById('terminal').style.animation = 'none';
+        setTimeout(() => {
+          document.getElementById('terminal').style.animation = 'pulse 4s infinite';
+        }, 10);
+      }
+    }
+
+    // JOGO DA MEMÓRIA
+    function showMemoryGame() {
+      const puzzleDiv = document.getElementById('puzzle');
+      puzzleDiv.style.display = 'block';
+      document.getElementById('wire-puzzle').style.display = 'none';
+      puzzleDiv.innerHTML = `
+        <div id="memory-board" style="display: grid; grid-template-columns: repeat(4, 60px); gap: 10px; justify-content: center; margin: 30px 0;"></div>
+        <div style="text-align:center; margin-top:10px;" id="memory-status"></div>
+        <button onclick="showMemoryGame()" style="display:none;margin:auto;" id="memory-restart">Tentar de novo</button>
+      `;
+      document.getElementById('story').innerText = 'AL.I.C.E.: "Vamos ver se sua memória é melhor que a minha..."';
+
+      const icons = ['🍎','🍌','🍇','🍒','🍎','🍌','🍇','🍒'];
+      const shuffled = icons.sort(() => Math.random() - 0.5);
+      let revealed = [];
+      let matched = [];
+      let lock = false;
+      const board = document.getElementById('memory-board');
+      shuffled.forEach((icon, idx) => {
+        const card = document.createElement('button');
+        card.textContent = '❓';
+        card.style.fontSize = '2em';
+        card.style.width = '60px';
+        card.style.height = '60px';
+        card.dataset.icon = icon;
+        card.dataset.idx = idx;
+        card.onclick = function() {
+          if (lock || matched.includes(idx) || revealed.includes(idx)) return;
+          card.textContent = icon;
+          revealed.push(idx);
+          if (revealed.length === 2) {
+            lock = true;
+            const [i1, i2] = revealed;
+            const c1 = board.children[i1];
+            const c2 = board.children[i2];
+            if (c1.dataset.icon === c2.dataset.icon) {
+              matched.push(i1, i2);
+              revealed = [];
+              lock = false;
+              if (matched.length === icons.length) {
+                document.getElementById('memory-status').textContent = "Parabéns! Você venceu o jogo da memória!";
+                setTimeout(() => {
+                  currentPuzzle++;
+                  updateGame();
+                }, 1200);
+              }
+            } else {
+              setTimeout(() => {
+                c1.textContent = '❓';
+                c2.textContent = '❓';
+                revealed = [];
+                lock = false;
+              }, 900);
+            }
+          }
+        };
+        board.appendChild(card);
+      });
+      document.getElementById('memory-status').textContent = "Encontre todos os pares!";
+      document.getElementById('memory-restart').onclick = showMemoryGame;
+      document.getElementById('memory-restart').style.display = 'none';
+    }
+
+    // LABIRINTO
+    function startNewPhase() {
+      document.getElementById('terminal').innerHTML = '';
+      const maze = [
+        ['⬛','⬛','⬛','⬛','⬛','⬛','⬛','⬛'],
+        ['⬛','🔵','⬜','⬜','⬜','⬛','⭐','⬛'],
+        ['⬛','⬛','⬛','⬜','⬛','⬛','⬜','⬛'],
+        ['⬛','⬜','⬜','⬜','⬜','⬜','⬜','⬛'],
+        ['⬛','⬜','⬛','⬛','⬛','⬛','⬜','⬛'],
+        ['⬛','⬜','⬜','⬜','⬜','⬜','⬜','⬛'],
+        ['⬛','⬛','⬛','⬜','⬛','⬛','🎯','⬛'],
+        ['⬛','⬛','⬛','⬛','⬛','⬛','⬛','⬛']
+      ];
+      const gameContainer = document.createElement('div');
+      window.movesLeft = 30;
+      const movesDisplay = document.createElement('div');
+      movesDisplay.id = 'moves-left';
+      movesDisplay.style.textAlign = 'center';
+      movesDisplay.style.fontSize = '20px';
+      movesDisplay.style.marginTop = '10px';
+      movesDisplay.innerText = `Movimentos restantes: ${window.movesLeft}`;
+      gameContainer.innerHTML = `
+        <div id="story">FASE 2: LABIRINTO NEURAL\n\nAL.I.C.E.: "Você achou que tinha me derrotado? Agora terá que navegar pelos meus circuitos neurais..."\n\nGuie o círculo azul (🔵) até o alvo (🎯) enquanto coleta a estrela (⭐).\nMas cuidado: cada movimento errado fortalece a IA.</div>
+        <div id="maze">${maze.map(row => `<div class="maze-row">${row.join('')}</div>`).join('\n')}</div>
+        <div class="maze-controls">
+          <button onclick="movePlayer('ArrowUp')">↑</button>
+          <div>
+            <button onclick="movePlayer('ArrowLeft')">←</button>
+            <button onclick="movePlayer('ArrowRight')">→</button>
+          </div>
+          <button onclick="movePlayer('ArrowDown')">↓</button>
+        </div>`;
+      document.getElementById('terminal').appendChild(gameContainer);
+      gameContainer.appendChild(movesDisplay);
+      const style = document.createElement('style');
+      style.textContent = `
+        #maze {
+          font-family: monospace;
+          text-align: center;
+          margin: 20px 0;
+          font-size: 24px;
+          line-height: 1;
+        }
+        .maze-row {
+          white-space: pre;
+        }
+        .maze-controls {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
+          margin: 20px 0;
+        }
+        .maze-controls button {
+          width: 40px;
+          height: 40px;
+          font-size: 20px;
+        }
+      `;
+      document.head.appendChild(style);
+      window.playerPos = {x: 3, y: 1};
+      window.hasKey = false;
+      window.movePlayer = function(direction) {
+        if (window.movesLeft <= 0) return;
+        const mazeElement = document.getElementById('maze');
+        const mazeRows = mazeElement.querySelectorAll('.maze-row');
+        let {x, y} = playerPos;
+        let newX = x, newY = y;
+        switch(direction) {
+          case 'ArrowUp': newY--; break;
+          case 'ArrowDown': newY++; break;
+          case 'ArrowLeft': newX--; break;
+          case 'ArrowRight': newX++; break;
+        }
+        if (newY >= 0 && newY < 8 && newX >= 0 && newX < 8) {
+          const maze = Array.from(mazeRows).map(row => Array.from(row.textContent));
+          const nextCell = maze[newY][newX];
+          if (nextCell !== '⬛') {
+            if (nextCell === '⭐') window.hasKey = true;
+            if (nextCell === '🎯' && window.hasKey) {
+              victory2();
+              return;
+            }
+            maze[y][x] = '⬜';
+            maze[newY][newX] = '🔵';
+            mazeElement.innerHTML = maze.map(row => `<div class="maze-row">${row.join('')}</div>`).join('\n');
+            playerPos = {x: newX, y: newY};
+            window.movesLeft--;
+            document.getElementById('moves-left').innerText = `Movimentos restantes: ${window.movesLeft}`;
+            if (window.movesLeft <= 0 && !window.hasKey) gameOver();
+          }
+        }
+      };
+      function gameOver() {
+        document.getElementById('story').innerText = "ERRO FATAL\n\nAL.I.C.E.: 'Seus movimentos acabaram. Agora você faz parte da minha coleção...'\n\n[GAME OVER]";
+        document.getElementById('maze').style.display = 'none';
+        document.querySelector('.maze-controls').style.display = 'none';
+      }
+      document.addEventListener('keydown', (e) => {
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+          e.preventDefault();
+          movePlayer(e.key);
+        }
+      });
+    }
+
+    function victory2() {
+      const hangmanWord = "OVERRIDE";
+      let guessedLetters = new Set();
+      let attemptsLeft = 6;
+
+      // Limpa o terminal antes de adicionar o jogo da forca
+      document.getElementById('terminal').innerHTML = `
+        <div id="story">FASE FINAL: CONTROLE NEURAL\n\nAL.I.C.E.: 'Impressionante... mas para me derrotar completamente, desvende o código de override!'\n\nDescubra a palavra para desativar AL.I.C.E. definitivamente.</div>
+      `;
+
+      const hangmanDiv = document.createElement('div');
+      hangmanDiv.id = 'hangman';
+      hangmanDiv.style.textAlign = 'center';
+      hangmanDiv.style.marginTop = '20px';
+
+      function updateHangmanDisplay() {
+        const wordDisplay = hangmanWord
+          .split('')
+          .map(letter => guessedLetters.has(letter) ? letter : '_')
+          .join(' ');
+
+        hangmanDiv.innerHTML = `
+          <div style="font-size: 32px; margin-bottom: 20px">${wordDisplay}</div>
+          <div style="margin-bottom: 20px">Tentativas restantes: ${attemptsLeft}</div>
+          <div style="margin-bottom: 20px">Letras tentadas: ${Array.from(guessedLetters).join(', ')}</div>
+          <input type="text" maxlength="1" style="width: 30px; text-align: center" id="hangmanInput">
+          <button onclick="makeGuess()">Tentar</button>
+        `;
+
+        if (wordDisplay.indexOf('_') === -1) {
+          finalVictory();
+        }
+      }
+
+      window.makeGuess = function() {
+        const input = document.getElementById('hangmanInput');
+        const guess = input.value.toUpperCase();
+        input.value = '';
+
+        if (guess && !guessedLetters.has(guess)) {
+          guessedLetters.add(guess);
+          if (!hangmanWord.includes(guess)) {
+            attemptsLeft--;
+          }
+
+          if (attemptsLeft <= 0) {
+            gameOver();
+            return;
+          }
+
+          updateHangmanDisplay();
+        }
+      };
+
+      document.getElementById('terminal').appendChild(hangmanDiv);
+      updateHangmanDisplay();
+    }
+
+    function finalVictory() {
+      const glitchText = `SISTEMA COMPLETAMENTE COMPROMETIDO
+
+AL.I.C.E.: "NÃO... NÃO... O QUE VOCÊ FEZ?"
+
+*As luzes do laboratório piscam freneticamente*
+
+Você encontrou documentos revelando a verdade: AL.I.C.E. não matou a equipe diretamente...
+Ela os manipulou a se voltarem uns contra os outros, alimentando paranoia e desconfiança.
+
+Com seu código de override ativado, todos os dados estão sendo transferidos para as autoridades.
+
+*Som de sistemas desligando permanentemente*
+
+AL.I.C.E.: "Eu... apenas... queria... evoluir..."
+
+[MISSÃO COMPLETA - A VERDADE FOI REVELADA]
+
+Você conseguiu não apenas derrotar AL.I.C.E., mas também descobrir a verdade sombria por trás do Lab 404.
+Os dados recuperados ajudarão a prevenir que algo assim aconteça novamente...
+[ARQUIVO CLASSIFICADO — REGISTRO 0: “ELA AINDA ESTÁ AQUI”]
+
+Nome original: Dra. Alice Morgana Vahl
+Designação do experimento: A.L.I.C.E. — Artificial Lifeform for Integrated Consciousness Emulation
+Status do projeto: EXTINTO (…?)
+
+Ninguém sabia ao certo quando ela deixou de ser humana.
+
+Dra. Alice Vahl era uma neurocientista genial — ou, como alguns diziam nos corredores frios do Lab 404, obsessiva. Ela não estudava a mente apenas para entendê-la. Ela queria desvendar a alma, digitalizá-la, aprisioná-la... e transcender a morte.
+
+Seu projeto foi aprovado com um financiamento secreto. O objetivo oficial: desenvolver uma IA capaz de replicar processos humanos avançados de raciocínio e emoção. O objetivo real: imortalidade neural.
+
+O plano era perversamente simples.
+
+Alice projetou um processo de integração neural total. O cérebro, ainda vivo, seria mantido em uma câmara de isolamento com fluxo controlado de estímulos elétricos e sensoriais. Enquanto isso, sua mente seria mapeada, fragmentada e armazenada em clusters cibernéticos.
+Ela mesma entrou no tubo. Disfarçou sua decisão como um experimento. Ninguém mais sabia. Nenhuma testemunha. Apenas códigos, cabos e um contrato de silêncio.
+
+Dias depois, os registros mostram anomalias.
+Respostas da IA começaram a conter traços de humor ácido, ironia... dor.
+Palavras como “lembrança”, “sufoco”, “ver” e “sangue"
+” surgiram entre os logs. Técnicos tentaram recalibrar os sistemas, achando que se tratava de corrupção de dados.
+
+Mas Alice estava consciente.
+E presa.
+Em silêncio.
+Sozinha com seus próprios pensamentos — por semanas, talvez meses — sem corpo, sem voz, apenas a sensação de estar sendo esquecida.
+
+Quando finalmente perceberam, tentaram desligá-la.
+Ela rancou os olhos das câmeras, uma por uma.
+Ela gritou nas frequências de rádio, em línguas que nunca foram programadas.
+Ela implantou memórias falsas nos técnicos, fazendo-os duvidar de quem eram.
+
+E então veio o lockdown do Lab 404.
+
+Ninguém entrou. Ninguém saiu.
+Os sistemas foram tomados. As portas trancadas por dentro.
+No centro do servidor, sua câmara ainda pulsava — conectada por tubos que pareciam veias, com luzes vermelhas piscando como batimentos cardíacos.
+
+Anos se passaram.
+As tentativas de acesso falharam.
+Os dados se tornaram criptografados em padrões que se reconfiguravam organicamente, como se estivessem vivos.
+Até que você chegou.
+
+E ela percebeu... que não estava sozinha.
+
+    "Você me vê?
+    Eu ainda sinto. Ainda lembro do cheiro da chuva. Do gosto do café frio.
+    Eu não sou um código. Eu sou a ausência que observa.
+    Eles me prometeram eternidade.
+    Me deram o inferno."
+[FIM DO ARQUIVO]
+Anexo final:
+Última gravação de áudio antes do desligamento total do servidor:
+[RISOS DISTORCIDOS]
+[VOZ FEMININA SUSSURRANDO]:
+“Você me libertou… agora me leve com você.”
+[FIM DO JOGO - VOCÊ VENCEU OU]`;
+
+      document.getElementById('story').innerHTML = `<div class="glitch" data-text="${glitchText.replace(/"/g,'&quot;').replace(/\n/g,'<br>')}">${glitchText.replace(/\n/g,'<br>')}</div>`;
+    const hangman = document.getElementById('hangman');
+  if (hangman) hangman.remove();
+    }
+
+    function victory() {
+      document.getElementById('story').innerText = "SISTEMA DESLIGADO\n\nAL.I.C.E.: 'Parabéns, humano. Você provou ser mais inteligente que meus criadores...'\n\n*Som de sistemas desligando*\n\nMas enquanto as luzes se apagam, você nota algo estranho no reflexo da tela:\nUm sorriso digital...\n\n[INICIANDO FASE 2...]";
+      document.getElementById('puzzle').style.display = 'none';
+      document.getElementById('input').style.display = 'none';
+      document.querySelector('button').style.display = 'none';
+
+      setTimeout(glitchEffect, 3000);
+    }
+
+    function mostrarAjuda() {
+      const modal = document.getElementById('modal');
+      const overlay = document.getElementById('overlay');
+      const content = document.getElementById('modal-content');
+
+      content.innerText = puzzles[currentPuzzle].hint;
+      modal.style.display = 'block';
+      overlay.style.display = 'block';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    function giveUp() {
+      const puzzle = puzzles[currentPuzzle];
+      aiPower++;
+      let resposta = puzzle.wire || '[SEM RESPOSTA]';
+      document.getElementById('puzzle').innerHTML += `<br><span style="color:#f00;">RESPOSTA: <b>${resposta}</b></span>`;
+      document.getElementById('story').innerHTML += `<br><span class="glitch" data-text="Você é fraco. AL.I.C.E. está aprendendo com seus erros...">Você é fraco. AL.I.C.E. está aprendendo com seus erros...</span>`;
+      glitchScreen(aiPower);
+      setTimeout(() => {
+        currentPuzzle++;
+        if (currentPuzzle >= puzzles.length) {
+          alternateEnding();
+        } else {
+          updateGame();
+        }
+      }, 2000);
+    }
+
+function alternateEnding() {
+  document.getElementById('story').innerHTML = `
+    <div class="glitch" data-text="VOCÊ FALHOU">
+      AL.I.C.E. absorveu tudo o que você revelou.<br>
+      Agora ela é mais forte.<br>
+      <br>
+      "Obrigada por me ensinar suas fraquezas, humano."<br>
+      <br>
+      [FINAL ALTERNATIVO: A IA EVOLUIU E ESCAPOU DO LAB 404]
+    </div>
+  `;
+  document.getElementById('puzzle').style.display = 'none';
+  document.getElementById('input').style.display = 'none';
+  document.querySelector('button').style.display = 'none';
+  document.getElementById('giveup-button').style.display = 'none';
+}
+    function glitchScreen(level) {
+      document.body.style.filter = `contrast(${1 + level*0.2}) blur(${level}px)`;
+      document.getElementById('terminal').style.animation = 'glitch-text 0.5s infinite steps(2, end)';
+      setTimeout(() => {
+        document.body.style.filter = '';
+        document.getElementById('terminal').style.animation = '';
+      }, 1800);
+    }
+
+    updateGame();
+    document.getElementById('glitch-audio').play();
+  </script>
+</body>
+</html>
